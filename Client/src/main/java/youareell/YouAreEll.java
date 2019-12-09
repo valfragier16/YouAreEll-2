@@ -1,11 +1,15 @@
 package youareell;
 
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
 import controllers.*;
 
 public class YouAreEll {
 
     private MessageController msgCtrl;
     private IdController idCtrl;
+    private String mainUrl = "http://zipcode.rocks:8085";
 
     public YouAreEll (MessageController m, IdController j) {
         // used j because i seems awkward
@@ -29,6 +33,8 @@ public class YouAreEll {
     }
 
     public String MakeURLCall(String mainurl, String method, String jpayload) {
-        return "nada";
+        HttpResponse<JsonNode> jsonResponse = Unirest.get(mainUrl + "/ids/newbie/messages")
+                .header("accept", "application/json").asJson();
+        return jsonResponse.getBody().toString();
     }
 }

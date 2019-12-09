@@ -9,6 +9,8 @@ import java.util.List;
 
 import controllers.IdController;
 import controllers.MessageController;
+import models.Id;
+import models.Message;
 import youareell.YouAreEll;
 
 // Simple Shell is a Console view for youareell.YouAreEll.
@@ -20,6 +22,8 @@ public class SimpleShell {
         System.out.println(output);
     }
     public static void main(String[] args) throws java.io.IOException {
+        IdController idController = new IdController();
+        MessageController messageController = new MessageController();
 
         YouAreEll webber = new YouAreEll(new MessageController(), new IdController());
         
@@ -67,16 +71,66 @@ public class SimpleShell {
                 // Specific Commands.
 
                 // ids
-                if (list.contains("ids")) {
-                    String results = webber.get_ids();
-                    SimpleShell.prettyPrint(results);
+                if (list.contains("ids") && list.size() == 3) {
+                    Id foundId = idController.findByGitId(list.get(1));
+                    if (foundId == null) {
+                        idController.postId(new Id(list.get(1), list.get(2)));
+                    } else {
+                        String newName = list.get(2);
+                        foundId.setName(newName);
+                        idController.putId(foundId);
+                    }
                     continue;
+                }
+                if (list.contains("ids")) {
+                    ArrayList<Id> results = idController.parseIds(idController.getIds());
+
+                    for (Id idInResults : results) {
+                        SimpleShell.prettyPrint(idInResults.getGithub() + " " + idInResults.getName() + "\n");
+                    } continue;
                 }
 
                 // messages
+                if (list.contains("send") && list.contains("to")) {
+                    String[] messageArr = commandLine.split("'");
+                    String messageText = messageArr[1];
+                    String fromGitId = list.get(1);
+                    String toGitId = list.get(list.size()-1);
+
+                    Id fromid = idController.findByGitId(fromGitId);
+                    Id toid = idController.findByGitId(toGitId);
+
+                    Message message = new Message(messageText, fromGitId, toGitId);
+                    messageController.postMessage(fromid, toid, message);
+                    continue;
+                }
+                if (list.contains("send")) {
+                    String[] messageArr = commandLine.split("'");
+                    String messageText = messageArr[1];
+                    String fromGitId = list.get(1);
+
+                    Id fromid = idController.findByGitId(fromGitId);
+
+                    Message message = new Message(messageText, fromGitId , "");
+                    messageController.postMessage(fromid, null , message);
+                    continue;
+                }
+                if (list.contains("messages") && list.size() == 3) {
+                    Id myId = idController.findByGitId(list.get(1));
+                    Id friendId = idController.findByGitId(list.get(2));
+                    ArrayList<Message> messages = messageController.getMessagesFromFriend(myId, friendId);
+                    SimpleShell.prettyPrint(messageController.toString(messages));
+                    continue;
+                }
+                if (list.contains("messages") && list.size() == 2) {
+                    Id foundId = idController.findByGitId(list.get(1));
+                    ArrayList<Message> messages = messageController.getMessagesForId(foundId);
+                    SimpleShell.prettyPrint(messageController.toString(messages));
+                    continue;
+                }
                 if (list.contains("messages")) {
-                    String results = webber.get_messages();
-                    SimpleShell.prettyPrint(results);
+                    ArrayList<Message> messages = messageController.getMessages();
+                    SimpleShell.prettyPrint(messageController.toString(messages));
                     continue;
                 }
                 // you need to add a bunch more.
